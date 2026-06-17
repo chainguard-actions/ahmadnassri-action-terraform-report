@@ -1,0 +1,54 @@
+name: Test terraform plan with no changes
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan text file with no changes
+        run: |
+          cat > /tmp/plan-no-changes.txt << 'EOF'
+          No changes. Your infrastructure matches the configuration.
+
+          Terraform has compared your real infrastructure against your configuration
+          and found no differences, so no changes are needed.
+          EOF
+
+      - name: Create terraform plan JSON file with no changes
+        run: |
+          cat > /tmp/plan-no-changes.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "variables": {},
+            "planned_values": {
+              "root_module": {}
+            },
+            "resource_changes": [],
+            "configuration": {
+              "root_module": {}
+            }
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          terraform-text: /tmp/plan-no-changes.txt
+          terraform-json: /tmp/plan-no-changes.json
+          show-no-changes: "true"
+          remove-stale-reports: "false"
+
+      - name: Assert action completed successfully with no changes
+        run: |
+          echo "Action completed without error for no-changes plan"
+          echo "PASS"

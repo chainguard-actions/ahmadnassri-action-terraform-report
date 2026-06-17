@@ -1,0 +1,46 @@
+{
+  "private": true,
+  "version": "0.0.0-semantically-released",
+  "name": "actions-terraform-report",
+  "description": "Updates Pull Requests with visual diff of Terraform Plan changes",
+  "author": "Ahmad Nassri <email@ahmadnassri.com> (https://www.ahmadnassri.com)",
+  "homepage": "https://github.com/ahmadnassri/action-terraform-report",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ahmadnassri/action-terraform-report.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ahmadnassri/action-terraform-report/issues"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://github.com/sponsors/ahmadnassri"
+  },
+  "license": "MIT",
+  "keywords": [
+    "terraform",
+    "report",
+    "action"
+  ],
+  "files": [
+    "lib"
+  ],
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "microbundle --no-pkg-main --no-sourcemap --external none --target node --format esm --entry index.js --output dist/index.js",
+    "test": "tap test --allow-empty-coverage",
+    "test:watch": "tap test --watch",
+    "test:ci": "tap test --show-full-coverage",
+    "test:report": "opener coverage/lcov-report/index.html"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "@ahmadnassri/terraform-unidiff": "^4.0.7"
+  },
+  "devDependencies": {
+    "microbundle": "^0.15.1",
+    "tap": "^21.6.2"
+  }
+}
