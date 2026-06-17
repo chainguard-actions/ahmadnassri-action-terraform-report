@@ -12,6 +12,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v4.1.17 | [`v4.1.17`](https://github.com/chainguard-actions/ahmadnassri-action-terraform-report/tree/v4.1.17) | [`56917f3`](https://github.com/ahmadnassri/action-terraform-report/commit/56917f3f569640335cc75d0808061d93215aba72) |
 | v5.0.0 | [`v5.0.0`](https://github.com/chainguard-actions/ahmadnassri-action-terraform-report/tree/v5.0.0) | [`b2df89d`](https://github.com/ahmadnassri/action-terraform-report/commit/b2df89d8c669d5be955164757e234790afbfdcdb) |
 | v5.1.0 | [`v5.1.0`](https://github.com/chainguard-actions/ahmadnassri-action-terraform-report/tree/v5.1.0) | [`c3baf0f`](https://github.com/ahmadnassri/action-terraform-report/commit/c3baf0fc30512a527d470d6d4d06f8a1d32cab30) |
+| v5.1.1 | [`v5.1.1`](https://github.com/chainguard-actions/ahmadnassri-action-terraform-report/tree/v5.1.1) | [`9f0b1f4`](https://github.com/ahmadnassri/action-terraform-report/commit/9f0b1f4b72ee07f96e3196f74566418aa8e85648) |
 
 ## Privacy
 
