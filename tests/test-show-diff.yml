@@ -1,0 +1,43 @@
+name: Test show-diff option on push event
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create event payload for push (no pull_request key)
+        run: |
+          mkdir -p /tmp/act-events
+          cat > /tmp/act-events/push.json <<'EOF'
+          {
+            "ref": "refs/heads/main",
+            "repository": {
+              "full_name": "owner/repo",
+              "name": "repo",
+              "owner": { "login": "owner" }
+            }
+          }
+          EOF
+
+      # Test with show-diff enabled and show-plan disabled.
+      # On a push event (not a pull_request), the action exits early with exit 0.
+      - id: action
+        uses: .
+        env:
+          GITHUB_EVENT_NAME: push
+          GITHUB_REF: refs/heads/main
+          GITHUB_EVENT_PATH: /tmp/act-events/push.json
+        with:
+          github-token: fake-token-for-non-pr-test
+          terraform-text: ${{ github.workspace }}/pristine/ahmadnassri--action-terraform-report/v4.1.17/tests/fixtures/terraform.txt
+          terraform-json: ${{ github.workspace }}/pristine/ahmadnassri--action-terraform-report/v4.1.17/tests/fixtures/terraform.json
+          show-diff: "true"
+          show-plan: "false"
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully with show-diff=true, show-plan=false"
+          echo "PASS"
