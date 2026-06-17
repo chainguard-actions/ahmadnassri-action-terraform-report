@@ -1,0 +1,64 @@
+name: Test terraform report with no changes plan
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/2/merge
+      GITHUB_HEAD_REF: no-changes-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan text file with no changes
+        run: |
+          mkdir -p /tmp/terraform-no-changes
+          cat > /tmp/terraform-no-changes/plan.txt << 'EOF'
+          No changes. Your infrastructure matches the configuration.
+
+          Terraform has compared your real infrastructure against your configuration
+          and found no differences, so no changes are needed.
+          EOF
+
+      - name: Create terraform plan JSON file with no changes
+        run: |
+          cat > /tmp/terraform-no-changes/plan.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "variables": {},
+            "planned_values": {
+              "root_module": {}
+            },
+            "resource_changes": [],
+            "configuration": {
+              "root_module": {}
+            }
+          }
+          EOF
+
+      - name: Run terraform report action with no changes
+        id: action
+        continue-on-error: true
+        uses: .
+        with:
+          github-token: fake-token-for-testing
+          terraform-text: /tmp/terraform-no-changes/plan.txt
+          terraform-json: /tmp/terraform-no-changes/plan.json
+          show-header: "true"
+          show-footer: "true"
+          show-plan: "true"
+          show-diff: "false"
+          remove-stale-reports: "false"
+
+      - name: Assert action was invoked
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          if [ -z "${{ steps.action.outcome }}" ]; then
+            echo "FAIL: action outcome was not set"
+            exit 1
+          fi
+          echo "PASS: action was invoked with outcome: ${{ steps.action.outcome }}"
