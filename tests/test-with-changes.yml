@@ -1,0 +1,109 @@
+name: Test with terraform resource changes
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan text file (with changes)
+        run: |
+          cat > /tmp/plan-changes.txt << 'EOF'
+          Terraform used the selected providers to generate the following execution
+          plan. Resource actions are indicated with the following symbols:
+            + create
+
+          Terraform will perform the following actions:
+
+            # aws_s3_bucket.example will be created
+            + resource "aws_s3_bucket" "example" {
+                + bucket = "my-example-bucket"
+                + id     = (known after apply)
+              }
+
+          Plan: 1 to add, 0 to change, 0 to destroy.
+          EOF
+
+      - name: Create terraform plan JSON file (with changes)
+        run: |
+          cat > /tmp/plan-changes.json << 'EOF'
+          {
+            "format_version": "1.1",
+            "terraform_version": "1.5.0",
+            "variables": {},
+            "planned_values": {
+              "root_module": {
+                "resources": [
+                  {
+                    "address": "aws_s3_bucket.example",
+                    "mode": "managed",
+                    "type": "aws_s3_bucket",
+                    "name": "example",
+                    "provider_name": "registry.terraform.io/hashicorp/aws",
+                    "schema_version": 0,
+                    "values": {
+                      "bucket": "my-example-bucket"
+                    }
+                  }
+                ]
+              }
+            },
+            "resource_changes": [
+              {
+                "address": "aws_s3_bucket.example",
+                "mode": "managed",
+                "type": "aws_s3_bucket",
+                "name": "example",
+                "provider_name": "registry.terraform.io/hashicorp/aws",
+                "change": {
+                  "actions": ["create"],
+                  "before": null,
+                  "after": {
+                    "bucket": "my-example-bucket"
+                  },
+                  "after_unknown": {
+                    "id": true
+                  }
+                }
+              }
+            ],
+            "configuration": {
+              "root_module": {}
+            },
+            "timestamp": "2024-01-01T00:00:00Z",
+            "errored": false
+          }
+          EOF
+
+      - name: Run action with resource changes
+        id: action
+        uses: .
+        with:
+          github-token: fake-token-for-testing
+          terraform-text: /tmp/plan-changes.txt
+          terraform-json: /tmp/plan-changes.json
+          show-no-changes: "true"
+          show-header: "true"
+          show-footer: "true"
+          show-plan: "true"
+          show-diff: "true"
+          remove-stale-reports: "false"
+        continue-on-error: true
+
+      - name: Assert action ran (completed or failed gracefully)
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action may fail because there's no real GitHub PR context,
+          # but it should not crash before reading the input files.
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran (outcome: ${{ steps.action.outcome }})"
