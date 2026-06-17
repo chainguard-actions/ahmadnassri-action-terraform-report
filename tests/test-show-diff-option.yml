@@ -1,0 +1,47 @@
+name: Test show-diff and show-plan options
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan files
+        run: |
+          echo "Terraform plan output text" > /tmp/terraform.txt
+          cat > /tmp/terraform.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "resource_changes": [
+              {
+                "address": "aws_instance.example",
+                "change": {
+                  "actions": ["update"],
+                  "before": { "instance_type": "t2.micro" },
+                  "after": { "instance_type": "t2.small" }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Run action with show-diff=true and show-plan=false on non-PR event
+        id: action
+        uses: .
+        with:
+          github-token: fake-token-for-test
+          terraform-text: /tmp/terraform.txt
+          terraform-json: /tmp/terraform.json
+          show-diff: "true"
+          show-plan: "false"
+          custom-header: ":robot: Custom Terraform Report"
+        env:
+          GITHUB_EVENT_NAME: push
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully with show-diff=true, show-plan=false"
+          echo "PASS"

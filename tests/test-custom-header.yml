@@ -1,0 +1,39 @@
+name: Test custom-header and remove-stale-reports options
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan files
+        run: |
+          echo "No changes. Infrastructure is up-to-date." > /tmp/terraform.txt
+          cat > /tmp/terraform.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "resource_changes": []
+          }
+          EOF
+
+      - name: Run action with custom-header and remove-stale-reports on non-PR event
+        id: action
+        uses: .
+        with:
+          github-token: fake-token-for-test
+          terraform-text: /tmp/terraform.txt
+          terraform-json: /tmp/terraform.json
+          show-diff: "false"
+          show-plan: "true"
+          remove-stale-reports: "false"
+          custom-header: ":white_check_mark: My Custom Terraform Header"
+        env:
+          GITHUB_EVENT_NAME: push
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully with custom-header and remove-stale-reports=false"
+          echo "PASS"

@@ -1,0 +1,44 @@
+name: Test non-PR exit behavior
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan files
+        run: |
+          echo "foobar" > /tmp/terraform.txt
+          cat > /tmp/terraform.json << 'EOF'
+          {
+            "format_version": "xxx",
+            "terraform_version": "yyy",
+            "resource_changes": [
+              {
+                "address": "module.foo.bar",
+                "change": {
+                  "actions": ["no-op"],
+                  "before": { "foo": "bar" },
+                  "after": { "foo": "bar" }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Run action on non-PR event (should exit 0 with warning)
+        id: action
+        uses: .
+        with:
+          github-token: fake-token-for-non-pr-test
+          terraform-text: /tmp/terraform.txt
+          terraform-json: /tmp/terraform.json
+        env:
+          GITHUB_EVENT_NAME: push
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully on non-PR event"
+          echo "PASS"
