@@ -1,0 +1,62 @@
+name: Test - Show Diff Option
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan text file
+        run: |
+          mkdir -p /tmp/tf-test
+          printf 'Terraform will perform the following actions:\n\n  # aws_instance.example will be created\n  + resource "aws_instance" "example" {\n      + ami = "ami-12345"\n    }\n\nPlan: 1 to add, 0 to change, 0 to destroy.\n' > /tmp/tf-test/terraform.txt
+
+      - name: Create terraform plan JSON file (with create action)
+        run: |
+          cat > /tmp/tf-test/terraform.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "resource_changes": [
+              {
+                "address": "aws_instance.example",
+                "change": {
+                  "actions": ["create"],
+                  "before": null,
+                  "after": {
+                    "ami": "ami-12345"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Run action with show-diff enabled
+        id: action
+        uses: .
+        with:
+          terraform-text: /tmp/tf-test/terraform.txt
+          terraform-json: /tmp/tf-test/terraform.json
+          show-diff: "true"
+          show-plan: "true"
+          show-header: "true"
+          show-footer: "true"
+        continue-on-error: true
+
+      - name: Assert action exited gracefully (not a PR)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action exits early (exit 0) because there is no pull_request context
+          # under workflow_dispatch. This verifies the action accepts show-diff input
+          # without crashing before the PR context check.
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action accepted show-diff option and exited gracefully"
+          else
+            echo "FAIL: expected success (graceful exit) but got: $OUTCOME"
+            exit 1
+          fi

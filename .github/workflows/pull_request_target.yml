@@ -1,0 +1,15 @@
+# ----------------------------------------------- #
+# Note: this file originates in template-template #
+# ----------------------------------------------- #
+
+name: pull_request_target
+
+on: pull_request_target
+
+permissions:
+  contents: read
+
+jobs:
+  main:
+    uses: ahmadnassri/actions/.github/workflows/pull-request-target.yml@d286709a5e83ade1254ea7f52d3d4faedb514b2b # master
+    secrets: inherit
