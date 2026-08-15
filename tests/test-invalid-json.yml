@@ -1,0 +1,37 @@
+name: Test invalid terraform JSON plan file (non-PR context)
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Create an invalid JSON file to test error handling.
+      # In non-PR context, the action exits early (process.exit(0)) before
+      # attempting to parse the JSON file, so it should still succeed.
+      - name: Prepare invalid terraform plan files
+        run: |
+          echo "foobar" > /tmp/terraform.txt
+          echo "{ this is not valid json }" > /tmp/terraform-invalid.json
+
+      - id: action
+        uses: .
+        with:
+          terraform-text: /tmp/terraform.txt
+          terraform-json: /tmp/terraform-invalid.json
+        continue-on-error: true
+
+      - name: Assert action exits gracefully in non-PR context even with invalid JSON
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # In non-PR context, the action calls process.exit(0) before parsing JSON.
+          # So even with invalid JSON, the action should succeed (exit 0).
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) in non-PR context, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action exited gracefully in non-PR context"

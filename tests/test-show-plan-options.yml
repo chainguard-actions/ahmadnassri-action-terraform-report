@@ -1,0 +1,35 @@
+name: Test show-plan and show-diff options
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Test with show-plan=true and show-diff=true and a custom header.
+      # The action exits gracefully (process.exit(0)) in non-PR context
+      # regardless of options, since the non-PR check happens before any
+      # plan processing.
+      - id: action
+        uses: .
+        with:
+          terraform-text: ${{ github.workspace }}/tests/fixtures/terraform.txt
+          terraform-json: ${{ github.workspace }}/tests/fixtures/terraform.json
+          show-plan: "true"
+          show-diff: "true"
+          custom-header: ":rocket: Custom Terraform Report"
+        continue-on-error: true
+
+      - name: Assert action exited gracefully with show-plan and show-diff options
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action calls process.exit(0) when not in a PR context.
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) with show-plan/show-diff options, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action exited gracefully with show-plan and show-diff options"

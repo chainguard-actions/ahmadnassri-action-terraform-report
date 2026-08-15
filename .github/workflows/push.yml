@@ -1,0 +1,25 @@
+# ---------------------------------------------------- #
+# Note: this file originates in template-action-node #
+# ---------------------------------------------------- #
+
+name: push
+
+on:
+  - push
+  - workflow_dispatch
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: read
+  packages: read
+
+jobs:
+  main:
+    uses: ahmadnassri/actions/.github/workflows/push-action-node.yml@d286709a5e83ade1254ea7f52d3d4faedb514b2b # master
+    secrets: inherit
+    permissions:
+      contents: write
+      statuses: write
+      packages: write
+      pull-requests: write

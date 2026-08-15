@@ -1,0 +1,30 @@
+name: Test missing required inputs
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action requires both terraform-text and terraform-json.
+      # When terraform-json is missing (empty string), the action should
+      # call process.exit(1) due to the missing inputs check in context().
+      - id: action-missing-json
+        uses: .
+        with:
+          terraform-text: ${{ github.workspace }}/tests/fixtures/terraform.txt
+          # terraform-json intentionally omitted — will be empty string
+        continue-on-error: true
+
+      - name: Assert action fails when terraform-json is missing
+        env:
+          OUTCOME: ${{ steps.action-missing-json.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail when terraform-json is missing, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action correctly failed when terraform-json is missing"

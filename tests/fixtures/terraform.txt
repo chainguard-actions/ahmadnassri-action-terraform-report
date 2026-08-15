@@ -1,0 +1,14 @@
+Terraform will perform the following actions:
+
+  # aws_instance.example will be created
+  + resource "aws_instance" "example" {
+      + ami           = "ami-12345678"
+      + instance_type = "t2.micro"
+    }
+
+  # module.foo.baz will be updated in-place
+  ~ resource "module.foo.baz" "example" {
+      ~ foo = "bar" -> "baz"
+    }
+
+Plan: 1 to add, 1 to change, 0 to destroy.

@@ -1,0 +1,32 @@
+name: Test basic usage in non-PR context
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action exits with process.exit(0) and a warning when not in a PR context.
+      # Under workflow_dispatch, pull_request payload is always absent, so this is expected.
+      # We use fixture files directly from the workspace (no /tmp copy needed).
+      - id: action
+        uses: .
+        with:
+          terraform-text: ${{ github.workspace }}/tests/fixtures/terraform.txt
+          terraform-json: ${{ github.workspace }}/tests/fixtures/terraform.json
+        continue-on-error: true
+
+      - name: Assert action exited gracefully (non-PR context)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action calls process.exit(0) when not in a PR context,
+          # which GitHub Actions treats as success.
+          if [ "$OUTCOME" != "success" ]; then
+            echo "FAIL: expected action to succeed (exit 0) in non-PR context, got: $OUTCOME"
+            exit 1
+          fi
+          echo "PASS: action exited gracefully in non-PR context"
