@@ -1,0 +1,30 @@
+name: Test no-changes terraform plan
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Copy fixture files to workspace
+        run: |
+          cp "$GITHUB_WORKSPACE/tests/fixtures/terraform-no-changes.json" /tmp/terraform-no-changes.json
+          cp "$GITHUB_WORKSPACE/tests/fixtures/terraform-no-changes.txt" /tmp/terraform-no-changes.txt
+
+      - name: Run action with terraform plan containing no changes
+        id: action
+        uses: .
+        with:
+          terraform-text: /tmp/terraform-no-changes.txt
+          terraform-json: /tmp/terraform-no-changes.json
+          show-plan: "true"
+          show-diff: "false"
+          show-no-changes: "true"
+          remove-stale-reports: "false"
+
+      - name: Assert action completed successfully
+        run: |
+          echo "Action completed successfully with no-changes plan (exited 0 as expected for non-PR context)"
+          echo "PASS"

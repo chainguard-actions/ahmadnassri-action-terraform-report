@@ -1,0 +1,41 @@
+{
+  "format_version": "1.0",
+  "terraform_version": "1.5.0",
+  "resource_changes": [
+    {
+      "address": "module.foo.bar",
+      "change": {
+        "actions": ["no-op"],
+        "before": {
+          "foo": "bar"
+        },
+        "after": {
+          "foo": "bar"
+        }
+      }
+    },
+    {
+      "address": "module.foo.baz",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "foo": "bar"
+        },
+        "after": {
+          "foo": "baz"
+        }
+      }
+    },
+    {
+      "address": "aws_instance.example",
+      "change": {
+        "actions": ["create"],
+        "before": null,
+        "after": {
+          "ami": "ami-12345678",
+          "instance_type": "t2.micro"
+        }
+      }
+    }
+  ]
+}
