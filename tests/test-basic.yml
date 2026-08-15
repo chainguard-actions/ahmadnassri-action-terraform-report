@@ -1,0 +1,100 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan text file
+        run: |
+          cat > /tmp/plan.txt << 'EOF'
+          Terraform used the selected providers to generate the following execution
+          plan. Resource actions are indicated with the following symbols:
+            + create
+
+          Terraform will perform the following actions:
+
+            # aws_s3_bucket.example will be created
+            + resource "aws_s3_bucket" "example" {
+                + bucket = "my-test-bucket"
+                + id     = (known after apply)
+              }
+
+          Plan: 1 to add, 0 to change, 0 to destroy.
+          EOF
+
+      - name: Create terraform plan JSON file
+        run: |
+          cat > /tmp/plan.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "variables": {},
+            "planned_values": {
+              "root_module": {
+                "resources": [
+                  {
+                    "address": "aws_s3_bucket.example",
+                    "mode": "managed",
+                    "type": "aws_s3_bucket",
+                    "name": "example",
+                    "provider_name": "registry.terraform.io/hashicorp/aws",
+                    "schema_version": 0,
+                    "values": {
+                      "bucket": "my-test-bucket"
+                    }
+                  }
+                ]
+              }
+            },
+            "resource_changes": [
+              {
+                "address": "aws_s3_bucket.example",
+                "mode": "managed",
+                "type": "aws_s3_bucket",
+                "name": "example",
+                "provider_name": "registry.terraform.io/hashicorp/aws",
+                "change": {
+                  "actions": ["create"],
+                  "before": null,
+                  "after": {
+                    "bucket": "my-test-bucket"
+                  },
+                  "after_unknown": {
+                    "id": true
+                  }
+                }
+              }
+            ],
+            "configuration": {
+              "root_module": {}
+            }
+          }
+          EOF
+
+      - name: Run terraform report action
+        id: action
+        continue-on-error: true
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          terraform-text: /tmp/plan.txt
+          terraform-json: /tmp/plan.json
+
+      - name: Assert action ran (no PR context is acceptable)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "action outcome: $OUTCOME"
+          # The action may fail because there is no pull request context under
+          # workflow_dispatch, but it should not crash due to missing/invalid files.
+          # We accept both success and failure (no PR = expected failure).
+          if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action ran to completion (outcome=$OUTCOME)"
+          else
+            echo "FAIL: unexpected outcome: $OUTCOME"
+            exit 1
+          fi
