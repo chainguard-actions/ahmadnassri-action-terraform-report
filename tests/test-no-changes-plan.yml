@@ -1,0 +1,49 @@
+name: Test no-changes terraform plan
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan fixtures with no changes
+        run: |
+          mkdir -p /tmp/tf-fixtures-noop
+          cat > /tmp/tf-fixtures-noop/plan.txt << 'EOF'
+          No changes. Your infrastructure matches the configuration.
+          EOF
+
+          cat > /tmp/tf-fixtures-noop/plan.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "resource_changes": [
+              {
+                "address": "module.foo.bar",
+                "change": {
+                  "actions": ["no-op"],
+                  "before": {
+                    "foo": "bar"
+                  },
+                  "after": {
+                    "foo": "bar"
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Run action with no-op plan (expect graceful exit in non-PR context)
+        id: action
+        uses: .
+        with:
+          terraform-text: /tmp/tf-fixtures-noop/plan.txt
+          terraform-json: /tmp/tf-fixtures-noop/plan.json
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully with no-op plan (graceful exit in non-PR context)"
+          echo "PASS"

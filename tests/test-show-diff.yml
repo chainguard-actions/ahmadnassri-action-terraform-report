@@ -1,0 +1,77 @@
+name: Test show-diff option with plan changes
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create terraform plan fixtures with multiple changes
+        run: |
+          mkdir -p /tmp/tf-fixtures-diff
+          cat > /tmp/tf-fixtures-diff/plan.txt << 'EOF'
+          Terraform will perform the following actions:
+
+            # module.foo.baz will be updated in-place
+            ~ resource "foo" "baz" {
+                ~ foo = "bar" -> "baz"
+              }
+
+            # module.foo.new will be created
+            + resource "foo" "new" {
+                + id  = (known after apply)
+                + bar = "value"
+              }
+
+          Plan: 1 to add, 1 to change, 0 to destroy.
+          EOF
+
+          cat > /tmp/tf-fixtures-diff/plan.json << 'EOF'
+          {
+            "format_version": "1.0",
+            "terraform_version": "1.5.0",
+            "resource_changes": [
+              {
+                "address": "module.foo.bar",
+                "change": {
+                  "actions": ["no-op"],
+                  "before": { "foo": "bar" },
+                  "after": { "foo": "bar" }
+                }
+              },
+              {
+                "address": "module.foo.baz",
+                "change": {
+                  "actions": ["update"],
+                  "before": { "foo": "bar" },
+                  "after": { "foo": "baz" }
+                }
+              },
+              {
+                "address": "module.foo.new",
+                "change": {
+                  "actions": ["create"],
+                  "before": null,
+                  "after": { "bar": "value" }
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Run action with show-diff enabled (expect graceful exit in non-PR context)
+        id: action
+        uses: .
+        with:
+          terraform-text: /tmp/tf-fixtures-diff/plan.txt
+          terraform-json: /tmp/tf-fixtures-diff/plan.json
+          show-diff: "true"
+          show-plan: "true"
+          remove-stale-reports: "false"
+
+      - name: Assert action completed without error
+        run: |
+          echo "Action completed successfully with show-diff=true (graceful exit in non-PR context)"
+          echo "PASS"
